@@ -1,0 +1,20 @@
+---
+schema_catalog:
+  - # Schema for lab test results files
+    name: lab_test_results_schema
+    extends: ~
+    elements:
+      - name: lab
+      - name: first_name
+      - name: last_name
+      - name: state
+        type: STRING
+        validation: ^[A-Z][A-Z]$
+      - name: test_time
+        type: TIME
+      - name: observation
+        type: STRING
+        validation: covid-19:pos|covid-19:neg
+
+
+

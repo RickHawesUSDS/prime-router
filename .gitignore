@@ -31,6 +31,9 @@ dependency-reduced-pom.xml
 .idea/**
 *.iml
 
+# Play files
+result_files/*.csv
+routed_files/*.csv
 
 
 
