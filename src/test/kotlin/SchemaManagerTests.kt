@@ -27,12 +27,11 @@ class SchemaManagerTests {
         SchemaManager.loadSchemas(listOf(one, two))
         assertEquals(2, SchemaManager.schemas.size)
         assertNotNull(SchemaManager.schemas["one"])
-        assertNotNull(SchemaManager.flattenSchemas["two"])
-        assertEquals(3, SchemaManager.flattenSchemas["two"]!!.elements.size)
+        assertEquals(3, SchemaManager.schemas["two"]!!.allElements.size)
 
         SchemaManager.loadSchemas(listOf(two, one))
-        assertEquals(3, SchemaManager.flattenSchemas["two"]!!.elements.size)
-        assertEquals("a", SchemaManager.flattenSchemas["two"]!!.elements[0].name)
+        assertEquals(3, SchemaManager.schemas["two"]!!.allElements.size)
+        assertEquals("a", SchemaManager.schemas["two"]!!.allElements[0].name)
     }
 
 }

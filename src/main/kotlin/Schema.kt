@@ -5,9 +5,13 @@ data class Schema(
     val elements: List<Element>,
     //val order: List<String>?, coming soon reorder the elements
     val extends: String? = null,
+    val parent: Schema? = null, // fixup after loading into manager
  ) {
+    val allElements: List<Element>
+        get() { return if (parent == null) elements else parent.allElements + elements }
+
     fun findElement(name: String) : Element? {
-        return elements.find { element -> element.name == name }
+        return elements.find { element -> element.name == name } ?: parent?.findElement(name)
     }
 
     fun unionElements(otherSchema: Schema) : List<Element> {

@@ -10,15 +10,15 @@ import com.github.doyaaaaaken.kotlincsv.client.CsvReader
 import com.github.doyaaaaaken.kotlincsv.client.CsvWriter
 import java.io.File
 import java.nio.file.Path
-import java.nio.file.Paths
 
 class RouterCli: CliktCommand(help="Send health messages to their destinations") {
     private val schemaName by option("--schema", help="Schema name to use")
         .prompt()
-    private val outputDirectory by option("--output_dir", help="output directory")
+    private val output by option("--out", "--output", help="output filename")
+    private val outputDirectory by option("--out_dir", "--output_dir", help="output directory")
         .file(mustExist = true, mustBeWritable = true)
-        .default(File("routed_files"))
-    private val input by argument(name="schema", help="file to route")
+        .default(File("."))
+    private val input by argument(name="test_file", help="file to route")
         .file(mustExist = true, mustBeReadable = true)
 
 
@@ -35,18 +35,22 @@ class RouterCli: CliktCommand(help="Send health messages to their destinations")
 
         // Parse the CSV
         val schema = SchemaManager.schemas[schemaName] ?: error("Invalid schema name")
-        //val messages = MessageSerializers.decodeCsv(schema, inputRows)
+        val messages = Message.decodeCsv(schema, inputRows)
         echo("processed the file")
 
         // Write the file
-        //val outputRows = MessageSerializers.encodeCsv(messages)
+        val outputRows = Message.encodeCsv(messages)
 
         // Serialize as CSV
-        val outputPath = Path.of(outputDirectory.absolutePath,"/${input.name}")
-        val output = File(outputPath.toString())
-        if (!output.exists()) output.createNewFile()
-        CsvWriter().open(output,append = false) { writeAll(inputRows) }
-        echo("write: ${output.toString()}")
+        val fileName = output ?: input.name
+        val outputFile = File(Path.of(outputDirectory.absolutePath,"/${fileName}").toString())
+        if (!outputFile.exists()) {
+            outputFile.createNewFile()
+        }
+        CsvWriter().open(outputFile, append = false) {
+            writeAll(outputRows)
+        }
+        echo("write: ${outputFile.toString()}")
     }
 }
 

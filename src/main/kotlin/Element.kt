@@ -2,7 +2,7 @@ package gov.cdc.prime.router
 
 data class Element(
     val name: String,
-    val type: Type = Type.STRING,
+    val type: Type = Type.TEXT,
     val codeSystem: CodeSystem = CodeSystem.NONE,
     val code: String = "",
     val nameMap: String = "",
@@ -11,11 +11,10 @@ data class Element(
     val validation: String = "",
 ) {
     enum class Type {
-        STRING,
-        NUMBER,
-        TIME,
-        CNE, // Coded with no exceptions
-        CWE, // Coded with exceptions
+        TEXT,
+        NUMERIC,
+        DATE,
+        CODED, 
     }
 
     enum class CodeSystem {

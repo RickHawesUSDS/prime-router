@@ -10,7 +10,6 @@ import java.io.InputStream
 object SchemaManager {
     const val defaultDirectory = "router_directory/schema_catalog.yml"
     val schemas get() = schemaStore
-    val flattenSchemas get() = flattenStore
 
     data class Catalog(
         val schema_catalog: List<Schema>
@@ -25,25 +24,17 @@ object SchemaManager {
     }
 
     fun loadSchemas(schemas: List<Schema>) {
-        fun findAllElements(name: String, list: List<Schema>) : List<Element> {
-            val schema: Schema = list.find { it.name == name } ?: error("invalid extend name: $name")
-            return if (schema.extends != null)
-                findAllElements(schema.extends, list) + schema.elements
-            else
-                schema.elements
-        }
-
         schemaStore.clear()
         schemas.forEach {
             schemaStore[it.name] = it
         }
 
-        flattenStore.clear()
-        schemas.forEach {
-            flattenStore[it.name] = it.copy(elements = findAllElements(it.name, schemas))
+        // Fixup the parent references
+        schemaStore.forEach {
+            val parent = if (it.value.extends != null) schemaStore[it.value.extends] else null
+            schemaStore[it.key] = it.value.copy(parent = parent)
         }
     }
 
     private val schemaStore: MutableMap<String, Schema> = HashMap<String, Schema>()
-    private val flattenStore: MutableMap<String, Schema> = HashMap<String, Schema>()
 }
