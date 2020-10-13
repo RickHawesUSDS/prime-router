@@ -10,9 +10,7 @@ data class Receiver(
         val patterns: Map<String, String>,
         val transforms: Map<String, String>,
         val format: TopicFormat
-    ) {
-
-    }
+    )
 
     enum class TopicFormat {
         CSV,
