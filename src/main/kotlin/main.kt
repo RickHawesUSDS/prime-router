@@ -24,8 +24,9 @@ class RouterCli: CliktCommand(help="Send health messages to their destinations")
 
     override fun run() {
         // Load the schema
-        SchemaManager.loadSchemaCatalog()
-        echo("Loaded schema")
+        DirectoryManager.loadSchemaCatalog()
+        DirectoryManager.loadReceiversList()
+        echo("Loaded schema and receivers")
 
         // Open the file
         echo("Opened: ${input.absolutePath}")
@@ -34,7 +35,7 @@ class RouterCli: CliktCommand(help="Send health messages to their destinations")
         val inputRows: List<List<String>> = CsvReader().readAll(input)
 
         // Parse the CSV
-        val schema = SchemaManager.schemas[schemaName] ?: error("Invalid schema name")
+        val schema = DirectoryManager.schemas[schemaName] ?: error("Invalid schema name")
         val messages = Message.decodeCsv(schema, inputRows)
         echo("processed the file")
 

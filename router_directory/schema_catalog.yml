@@ -8,16 +8,17 @@ schema_catalog:
       - name: first_name
       - name: last_name
       - name: state
-        type: STRING
+        type: TEXT
         validation: ^[A-Z][A-Z]$
       - name: test_time
-        type: TIME
+        type: DATE
       - name: specimen_id
-        type: NUMBER
+        type: NUMERIC
       - name: observation
-        type: STRING
+        type: TEXT
         validation: covid-19:pos|covid-19:neg
 
+  # Based on the APHL
   - name: aphl-covid-19
     hl7_segments:
       - name: MSH

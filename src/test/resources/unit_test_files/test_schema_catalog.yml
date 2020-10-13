@@ -8,12 +8,12 @@ schema_catalog:
       - name: first_name
       - name: last_name
       - name: state
-        type: STRING
+        type: TEXT
         validation: ^[A-Z][A-Z]$
       - name: test_time
-        type: TIME
+        type: DATE
       - name: observation
-        type: STRING
+        type: TEXT
         validation: covid-19:pos|covid-19:neg
 
 

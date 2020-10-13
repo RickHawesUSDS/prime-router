@@ -7,7 +7,7 @@ data class Message(
     companion object {}
 
     fun isA(schema: Schema) : Boolean {
-        return schema == this.schema;
+        return schema == this.schema
     }
 
     fun validateValues() : Boolean {

@@ -9,27 +9,27 @@ class ElementTests {
 
     @Test
     fun `create element`() {
-        val elem1 = Element(name = "first", type = Element.Type.NUMBER)
+        val elem1 = Element(name = "first", type = Element.Type.NUMERIC)
         assertNotNull(elem1)
     }
 
     @Test
     fun `compare elements`() {
-        val elem1 = Element(name = "first", type = Element.Type.NUMBER)
-        val elem2 = Element(name = "first", type = Element.Type.NUMBER)
+        val elem1 = Element(name = "first", type = Element.Type.NUMERIC)
+        val elem2 = Element(name = "first", type = Element.Type.NUMERIC)
         assertEquals(elem1, elem2)
 
-        val elem3 = Element(name = "first", type = Element.Type.STRING)
+        val elem3 = Element(name = "first", type = Element.Type.TEXT)
         assertNotEquals(elem1, elem3)
     }
 
     @kotlin.test.Test
     fun `test`() {
-        val elem1 = Element(name = "first", type = Element.Type.NUMBER)
-        val elem2 = Element(name = "first", type = Element.Type.NUMBER)
+        val elem1 = Element(name = "first", type = Element.Type.NUMERIC)
+        val elem2 = Element(name = "first", type = Element.Type.NUMERIC)
         assertEquals(elem1, elem2)
 
-        val elem3 = Element(name = "first", type = Element.Type.STRING)
+        val elem3 = Element(name = "first", type = Element.Type.TEXT)
         assertNotEquals(elem1, elem3)
     }
 }

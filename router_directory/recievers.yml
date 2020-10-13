@@ -1,0 +1,26 @@
+---
+receivers:
+  # Arizona PHD
+  - name: phd1
+    description: Arizona PHD
+    address: phd1
+    topics:
+      - patterns: {observations: "covid-19:pos", state: AZ}
+        transforms: {deidentify: false}
+        format: CSV
+  # Florida PHD
+  - name: phd2
+    description: Florida PHD
+    address: phd2
+    topics:
+      - patterns: {observations: "covid-19:*", state: FL}
+        transforms: {deidentify: false}
+        format: CSV
+  # HHS
+  - name: fed1,
+    description: Federal feed
+    address: phd2
+    topics:
+      - patterns: {observations: "covid-19:*", state: .*}
+        transforms: {deidentify: true}
+        format: CSV
