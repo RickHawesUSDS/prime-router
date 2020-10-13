@@ -12,10 +12,11 @@ class DirectoryManagerTests {
               # Arizona PHD
               - name: phd1
                 description: Arizona PHD
-                address: phd1
                 topics:
-                  - patterns: {observation: "covid-19:*", state: AZ}
+                  - schema: covid-19
+                    patterns: {observation: "covid-19:*", state: AZ}
                     transforms: {deidentify: false}
+                    address: phd1
                     format: CSV
         """.trimIndent()
 

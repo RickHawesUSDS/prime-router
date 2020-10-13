@@ -1,5 +1,10 @@
 package gov.cdc.prime.router
 
+import com.github.doyaaaaaken.kotlincsv.client.CsvReader
+import com.github.doyaaaaaken.kotlincsv.client.CsvWriter
+import java.io.InputStream
+import java.io.OutputStream
+
 typealias CsvRows = List<List<String>>
 
 data class Message(
@@ -15,8 +20,10 @@ data class Message(
     }
 
     fun patternMatch(patterns: Map<String, String>): Boolean {
-        patterns.forEach { (key, value) ->
-            if (values[key]?.matches(Regex(value)) != true) {
+        patterns.forEach { (key, pattern) ->
+            val regex = Regex(pattern)
+            val value = values.getOrDefault(key, "")
+            if (!value.matches(regex)) {
                 return false
             }
         }
@@ -70,12 +77,25 @@ data class Message(
             return listOf(header) + rows
         }
 
-        fun splitMessages(messages: List<Message>, receivers: Map<String, Receiver>) : Map<String, List<Message>> {
-            var output = receivers.map { it.key to ArrayList<Message>() }.toMap()
+        fun writeCsv(stream: OutputStream, rows: CsvRows) {
+            CsvWriter().open(stream) {
+                writeAll(rows)
+            }
+        }
+
+        fun readCsv(stream: InputStream): CsvRows {
+            return CsvReader().readAll(stream)
+        }
+
+        fun splitMessages(messages: List<Message>, receivers: Map<String, Receiver>): Map<String, List<Message>> {
+            val output = receivers.map { it.key to ArrayList<Message>() }.toMap()
             messages.forEach { message ->
                 receivers.forEach { (key, receiver) ->
-                    if (message.patternMatch(receiver.topics[0].patterns)) {
-                        output[key]?.add(message)
+                    receiver.topics.forEach { (schema, patterns) ->
+                        if (schema != message.schema.name) return@forEach
+                        if (message.patternMatch(patterns)) {
+                            output[key]?.add(message)
+                        }
                     }
                 }
             }

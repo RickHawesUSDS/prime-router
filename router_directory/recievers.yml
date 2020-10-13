@@ -3,24 +3,27 @@ receivers:
   # Arizona PHD
   - name: phd1
     description: Arizona PHD
-    address: phd1
     topics:
-      - patterns: {observations: "covid-19:pos", state: AZ}
+      - schema: covid-19
+        patterns: {observation: covid-19:pos, state: AZ}
         transforms: {deidentify: false}
+        address: http://localhost:1181/
         format: CSV
   # Florida PHD
   - name: phd2
     description: Florida PHD
-    address: phd2
     topics:
-      - patterns: {observations: "covid-19:*", state: FL}
+      - schema: covid-19
+        patterns: {observation: covid-19:.*, state: FL}
         transforms: {deidentify: false}
+        address: http://localhost:1281/
         format: CSV
   # HHS
-  - name: fed1,
-    description: Federal feed
-    address: phd2
-    topics:
-      - patterns: {observations: "covid-19:*", state: .*}
-        transforms: {deidentify: true}
-        format: CSV
+  #- name: fed1
+  #  description: Federal feed
+  #  topics:
+  #    - schema: covid-19
+  #      patterns: {observation: covid-19:.*, state: .*}
+  #      transforms: {deidentify: true}
+  #      address: http://localhost:1381/
+  #      format: CSV

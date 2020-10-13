@@ -13,7 +13,7 @@ object DirectoryManager {
 
     val schemas get() = schemaStore
     val receivers get() = receiversStore
-    val mapper = ObjectMapper(YAMLFactory()).registerModule(KotlinModule())
+    private val mapper = ObjectMapper(YAMLFactory()).registerModule(KotlinModule())
 
     data class SchemaCatalog(
         val schema_catalog: List<Schema>
@@ -32,7 +32,7 @@ object DirectoryManager {
 
     fun loadSchemas(schemas: List<Schema>) {
         schemaStore.clear()
-        schemaStore.putAll(schemas.map {it.name to it}.toMap())
+        schemaStore.putAll(schemas.map { it.name to it }.toMap())
 
         // Fixup the parent references
         schemaStore.forEach {
@@ -49,7 +49,7 @@ object DirectoryManager {
 
     fun loadReceivers(receivers: List<Receiver>) {
         receiversStore.clear()
-        receiversStore.putAll(receivers.map {it.name to it}.toMap())
+        receiversStore.putAll(receivers.map { it.name to it }.toMap())
     }
 
     private val schemaStore: MutableMap<String, Schema> = HashMap<String, Schema>()

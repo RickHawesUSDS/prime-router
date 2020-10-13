@@ -19,7 +19,10 @@ class MessageTests {
     fun `test split one message`() {
         val one = Schema(name = "one", elements = listOf(Element("a"), Element("b")))
         val msg1 = Message(one, mapOf("a" to "1", "b" to "2"))
-        val rec1 = Receiver("phd1", topics = listOf(Receiver.Topic(patterns = mapOf("a" to "1"))))
+        val rec1 = Receiver(
+            "phd1",
+            topics = listOf(Receiver.Topic(schema = "one", patterns = mapOf("a" to "1"), address = "foo"))
+        )
         val split = Message.splitMessages(listOf(msg1), receivers = mapOf(rec1.name to rec1))
         assertNotNull(split[rec1.name])
         assertEquals(1, split[rec1.name]?.size)
@@ -31,7 +34,10 @@ class MessageTests {
         val one = Schema(name = "one", elements = listOf(Element("a"), Element("b")))
         val msg1 = Message(one, mapOf("a" to "1", "b" to "2"))
         val msg2 = Message(one, mapOf("a" to "3", "b" to "4"))
-        val rec1 = Receiver("phd1", topics = listOf(Receiver.Topic(patterns = mapOf("a" to "1"))))
+        val rec1 = Receiver(
+            "phd1",
+            topics = listOf(Receiver.Topic(schema = "one", patterns = mapOf("a" to "1"), address = "foo"))
+        )
         val split = Message.splitMessages(listOf(msg1, msg2), receivers = mapOf(rec1.name to rec1))
         assertNotNull(split[rec1.name])
         assertEquals(1, split[rec1.name]?.size)
@@ -43,8 +49,14 @@ class MessageTests {
         val one = Schema(name = "one", elements = listOf(Element("a"), Element("b")))
         val msg1 = Message(one, mapOf("a" to "1", "b" to "2"))
         val msg2 = Message(one, mapOf("a" to "3", "b" to "4"))
-        val rec1 = Receiver("phd1", topics = listOf(Receiver.Topic(patterns = mapOf("a" to "1"))))
-        val rec2 = Receiver("phd2", topics = listOf(Receiver.Topic(patterns = mapOf("a" to ".*"))))
+        val rec1 = Receiver(
+            "phd1",
+            topics = listOf(Receiver.Topic(schema = "one", patterns = mapOf("a" to "1"), address = "foo"))
+        )
+        val rec2 = Receiver(
+            "phd2",
+            topics = listOf(Receiver.Topic(schema = "one", patterns = mapOf("a" to ".*"), address = "food"))
+        )
         val split = Message.splitMessages(listOf(msg1, msg2), receivers = mapOf(rec1.name to rec1, rec2.name to rec2))
         assertNotNull(split[rec1.name])
         assertEquals(1, split[rec1.name]?.size)
@@ -53,6 +65,8 @@ class MessageTests {
         assertEquals(2, split[rec2.name]?.size)
         assertEquals(msg1, split[rec2.name]?.get(0))
     }
+
+    // CSV Tests
 
     @Test
     fun `test isValidCsv`() {
