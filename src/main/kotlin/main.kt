@@ -1,14 +1,10 @@
 package gov.cdc.prime.router
 
 import com.github.ajalt.clikt.core.CliktCommand
-import com.github.ajalt.clikt.parameters.arguments.argument
-import com.github.ajalt.clikt.parameters.groups.OptionGroup
 import com.github.ajalt.clikt.parameters.options.*
-import com.github.ajalt.clikt.parameters.types.file
 import java.io.*
 import java.net.HttpURLConnection
 import java.net.URL
-import java.nio.file.Path
 
 
 class RouterCli : CliktCommand(name = "prime", help = "Send health messages to their destinations") {
@@ -41,7 +37,7 @@ class RouterCli : CliktCommand(name = "prime", help = "Send health messages to t
                 if (i < inputSchemas!!.size)
                     inputSchemas!![i]
                 else
-                    inputSchemas!!.last();
+                    inputSchemas!!.last()
             val schema = DirectoryManager.schemas[schemaName] ?: error("Cannot find the $schemaName schema")
 
             val messages = readBlock(schema, file.inputStream())
@@ -56,25 +52,25 @@ class RouterCli : CliktCommand(name = "prime", help = "Send health messages to t
         writeBlock: (schema: Schema, messages: List<Message>, stream: OutputStream) -> Unit
     ) {
         if (outputDir == null && outputFile == null) return
-        dataSets.forEach { dataSet: DataSet ->
-            val outputFile = File((outputDir ?: ".") + "/${dataSet.name}")
+        dataSets.forEach { (name, schema, messages) ->
+            val outputFile = File((outputDir ?: ".") + "/${name}")
             echo("Write to: ${outputFile.absolutePath}")
             if (!outputFile.exists()) {
                 outputFile.createNewFile()
             }
             outputFile.outputStream().use {
-                writeBlock(dataSet.schema, dataSet.messages, it)
+                writeBlock(schema, messages, it)
             }
         }
     }
 
     private fun postHttp(address: String, block: (stream: OutputStream) -> Unit) {
-        echo("Sending to: ${address}")
+        echo("Sending to: $address")
         val urlObj = URL(address)
         val connection = urlObj.openConnection() as HttpURLConnection
         connection.requestMethod = "POST"
         connection.doOutput = true
-        val outputStream = connection.getOutputStream()
+        val outputStream = connection.outputStream
         outputStream.use {
             block(it)
         }
@@ -84,22 +80,42 @@ class RouterCli : CliktCommand(name = "prime", help = "Send health messages to t
         }
     }
 
+    private fun partitionByReceivers(input: List<DataSet>): List<DataSet> {
+        echo("partition by receiver")
+        val outputDataSets = ArrayList<DataSet>()
+        input.forEach { (name, schema, inputMessages) ->
+            val output: Map<String, List<Message>> = Message.splitMessages(inputMessages, DirectoryManager.receivers)
+            output.forEach { (receiver, splitMessages) ->
+                outputDataSets += DataSet("$receiver-${name}", schema, splitMessages)
+            }
+        }
+        return outputDataSets
+    }
+
+    private fun partitionByColumn(elementName: String, input: List<DataSet>): List<DataSet> {
+        return input
+    }
+
     override fun run() {
-        // Load the schema
+        // Load the schema and receivers
         DirectoryManager.loadSchemaCatalog()
         DirectoryManager.loadReceiversList()
         echo("Loaded schema and receivers")
 
-        // Gather inputs
+        // Gather input datasets
         val inputDataSets = readDataSetsFromFile { schema, stream ->
             Message.readCsv(schema, stream)
         }
 
         // Transform datasets
-        val outputDataSets = inputDataSets
+        val outputDataSets: List<DataSet> = when {
+            route -> partitionByReceivers(inputDataSets)
+            partitionBy != null -> partitionByColumn("", inputDataSets)
+            else -> inputDataSets
+        }
 
         // Output datasets
-        writeDataSetsToFile(outputDataSets) { schema, messages, stream ->
+        writeDataSetsToFile(outputDataSets) { _, messages, stream ->
             Message.writeCsv(stream, messages)
         }
     }
