@@ -19,11 +19,11 @@ receivers:
         address: http://localhost:1281/
         format: CSV
   # HHS
-  #- name: fed1
-  #  description: Federal feed
-  #  topics:
-  #    - schema: covid-19
-  #      patterns: {observation: covid-19:.*, state: .*}
-  #      transforms: {deidentify: true}
-  #      address: http://localhost:1381/
-  #      format: CSV
+  - name: fed1
+    description: Federal feed
+    topics:
+      - schema: covid-19
+        patterns: {observation: covid-19:.*, state: .*}
+        transforms: {deidentify: true}
+        address: http://localhost:1381/
+        format: CSV

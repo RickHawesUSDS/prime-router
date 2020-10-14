@@ -2,38 +2,69 @@ package gov.cdc.prime.router
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
-import com.github.ajalt.clikt.parameters.options.default
-import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.options.prompt
+import com.github.ajalt.clikt.parameters.groups.OptionGroup
+import com.github.ajalt.clikt.parameters.options.*
 import com.github.ajalt.clikt.parameters.types.file
-import java.io.BufferedReader
-import java.io.DataOutputStream
-import java.io.File
-import java.io.OutputStream
+import java.io.*
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.file.Path
 
 
-class RouterCli : CliktCommand(help = "Send health messages to their destinations") {
-    private val schemaName by option("--schema", help = "Schema name to use")
-        .prompt()
-    private val output by option("--out", "--output", help = "output filename")
-    private val outputDirectory by option("--out_dir", "--output_dir", help = "output directory")
-        .file(mustExist = true, mustBeWritable = true)
-        .default(File("."))
-    private val input by argument(name = "test_file", help = "file to route")
-        .file(mustExist = true, mustBeReadable = true)
+class RouterCli : CliktCommand(name = "prime", help = "Send health messages to their destinations") {
+    private val inputFiles by option("--input", help = "<file1>, <file2>, ...").split(",")
+    private val inputSchemas by option("--input_schema", help = "<schema_name>, <schema_name>, ...").split(",")
+    //val inputDirs by option("--input_dir", help = "<dir1>, <dir1>").split(",")
 
-    private fun writeFile(prefix: String = "", block: (stream: OutputStream) -> Unit) {
-        val fileName = (prefix + if (prefix.isEmpty()) "" else "-") + (output ?: input.name)
-        val outputFile = File(Path.of(outputDirectory.absolutePath, "/${fileName}").toString())
-        echo("Write to: ${outputFile.absolutePath}")
-        if (!outputFile.exists()) {
-            outputFile.createNewFile()
+    private val validate by option("--validate", help = "Validate stream").flag(default = true)
+    private val route by option("--route", help = "route to receivers lists").flag(default = false)
+    private val partitionBy by option("--partition_by", help = "<col> to partition")
+    private val send by option("--send", help = "send to a receiver if specified")
+
+    private val outputFile by option("--output", help = "<file> not compatible with route or partition")
+    private val outputDir by option("--output_dir", help = "<directory>")
+    private val outputSchema by option("--output_schema", help = "<schema_name> or use input schema if not specified")
+
+
+    data class DataSet(val name: String, val schema: Schema, val messages: List<Message>)
+
+    private fun readDataSetsFromFile(readBlock: (schema: Schema, stream: InputStream) -> List<Message>): List<DataSet> {
+        val inputDataSets = ArrayList<DataSet>()
+        if (inputSchemas == null) error("Schema is not specified. Use the --inputSchema option")
+        for (i in 0 until (inputFiles?.size ?: 0)) {
+            val fileName = inputFiles!![i]
+            val file = File(fileName)
+            if (!file.exists()) error("$fileName does not exist")
+            echo("Opened: ${file.absolutePath}")
+
+            val schemaName =
+                if (i < inputSchemas!!.size)
+                    inputSchemas!![i]
+                else
+                    inputSchemas!!.last();
+            val schema = DirectoryManager.schemas[schemaName] ?: error("Cannot find the $schemaName schema")
+
+            val messages = readBlock(schema, file.inputStream())
+
+            inputDataSets.add(DataSet(file.name, schema, messages))
         }
-        outputFile.outputStream().use {
-            block(it)
+        return inputDataSets
+    }
+
+    private fun writeDataSetsToFile(
+        dataSets: List<DataSet>,
+        writeBlock: (schema: Schema, messages: List<Message>, stream: OutputStream) -> Unit
+    ) {
+        if (outputDir == null && outputFile == null) return
+        dataSets.forEach { dataSet: DataSet ->
+            val outputFile = File((outputDir ?: ".") + "/${dataSet.name}")
+            echo("Write to: ${outputFile.absolutePath}")
+            if (!outputFile.exists()) {
+                outputFile.createNewFile()
+            }
+            outputFile.outputStream().use {
+                writeBlock(dataSet.schema, dataSet.messages, it)
+            }
         }
     }
 
@@ -53,41 +84,23 @@ class RouterCli : CliktCommand(help = "Send health messages to their destination
         }
     }
 
-
     override fun run() {
         // Load the schema
         DirectoryManager.loadSchemaCatalog()
         DirectoryManager.loadReceiversList()
         echo("Loaded schema and receivers")
 
-        // Open the file
-        echo("Opened: ${input.absolutePath}")
+        // Gather inputs
+        val inputDataSets = readDataSetsFromFile { schema, stream ->
+            Message.readCsv(schema, stream)
+        }
 
-        // Parse as CSV
-        val inputRows: CsvRows = Message.readCsv(input.inputStream())
+        // Transform datasets
+        val outputDataSets = inputDataSets
 
-        // Parse the CSV
-        val schema = DirectoryManager.schemas[schemaName] ?: error("Invalid schema name")
-        val messages = Message.decodeCsv(schema, inputRows)
-        echo("processed the file")
-
-        if (output != null) {
-            // Process one file
-            writeFile() {
-                val rows = Message.encodeCsv(messages)
-                Message.writeCsv(it, rows)
-            }
-        } else {
-            // Use receivers
-            val routedMsgs: Map<String, List<Message>> = Message.splitMessages(messages, DirectoryManager.receivers)
-            routedMsgs.forEach { (rec, msgs) ->
-                if (msgs.isEmpty()) return@forEach
-                val receiver = DirectoryManager
-                writeFile(rec) {
-                    val rows = Message.encodeCsv(msgs)
-                    Message.writeCsv(it, rows)
-                }
-            }
+        // Output datasets
+        writeDataSetsToFile(outputDataSets) { schema, messages, stream ->
+            Message.writeCsv(stream, messages)
         }
     }
 }

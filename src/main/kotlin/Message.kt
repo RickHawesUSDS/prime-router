@@ -77,14 +77,15 @@ data class Message(
             return listOf(header) + rows
         }
 
-        fun writeCsv(stream: OutputStream, rows: CsvRows) {
+        fun writeCsv(stream: OutputStream, messages: List<Message>) {
+            val rows = encodeCsv(messages)
             CsvWriter().open(stream) {
                 writeAll(rows)
             }
         }
 
-        fun readCsv(stream: InputStream): CsvRows {
-            return CsvReader().readAll(stream)
+        fun readCsv(schema: Schema, stream: InputStream): List<Message> {
+            return decodeCsv(schema, CsvReader().readAll(stream))
         }
 
         fun splitMessages(messages: List<Message>, receivers: Map<String, Receiver>): Map<String, List<Message>> {
