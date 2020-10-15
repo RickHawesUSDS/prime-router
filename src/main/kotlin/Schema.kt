@@ -1,14 +1,37 @@
 package gov.cdc.prime.router
 
+// A schema defines
 data class Schema(
-    val name: String,
-    val hl7_segments: List<Hl7Segment> = emptyList(),
+    val name: String, // Name should include version
     val elements: List<Element> = emptyList(),
-    //val order: List<String>?, coming soon reorder the elements
     val extends: String? = null,
     val parent: Schema? = null, // fixup after loading into manager
 ) {
-    data class Hl7Segment(val name: String, val template: String)
+    data class Element(
+        val name: String,
+        val type: Type = Type.TEXT,
+        val codeSystem: CodeSystem = CodeSystem.NONE,
+        val code: String = "",
+        val optional: Boolean = true,
+        val validation: String? = null,
+        val hl7_field: String? = null,
+        val hl7_operation: String? = null,
+        val hl7_validation: String? = null,
+        val hl7_template: String? = null,
+    ) {
+        enum class Type {
+            TEXT,
+            NUMERIC,
+            DATE,
+            CODED,
+        }
+
+        enum class CodeSystem {
+            NONE,
+            LOINC,
+            SNOMED
+        }
+    }
 
     val allElements: List<Element>
         get() {

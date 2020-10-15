@@ -20,21 +20,6 @@ schema_catalog:
 
   # Based on the APHL
   - name: aphl-covid-19
-    hl7_segments:
-      - name: MSH
-        template: MSH|^~\&|_MSH-3.1_^_MSH-3.2_^ISO|_MSH-4.1_^_MSH-4.2_^_MSH-4.3_|_MSH-5.1_^_MSH-5.2_^ISO|_MSH-6.1_^_MSH-6.2_^ISO|_MSH-7_||ORU^R01^ORU_R01|_MSH-10_|_MSH-11_|2.5.1|||NE|NE|USA||||PHLabReport-NoAck^ELR251R1_Rcvr_Prof^2.16.840.1.113883.9.11^ISO
-      - name: SFT
-        template: SFT|_SFT-1_|_SFT-2_|_SFT-3_|_SFT-4_||_SFT-6_
-      - name: ORC
-        template: ORC|RE||_ORC-3.1_^_ORC-3.2_^_ORC-3.3_^ISO|||||||||_ORC-12.1_^_ORC-12.2_^_ORC-12.3_^^^^^^NPI&2.16.840.1.113883.4.6&ISO^^^^NPI^^^^^^^^||_ORC-14_|_ORC-15_||||||_ORC-21.1_|_ORC-22.1_^_ORC-22.2_^_ORC-22.3_^_ORC-22.4_^_ORC-22.5_^^^^_ORC-22.9_|_ORC-23_|_ORC-24.1_^_ORC-24.2_^_ORC-24.3_^_ORC-24.4_^_ORC-24.5_^^^^_ORC-24.9_
-      - name: OBR
-        template: OBR|1||_OBR-3.1_^_OBR-3.2_^_OBR-3.3_^ISO|_OBR-4.1_^_OBR-4.2_^_OBR-4.3_^^^^^^_OBR-4.9_|||_OBR-7_|||||||||_OBR-16.1_^_OBR-16.2_^_OBR-16.3_^^^^^^NPI&2.16.840.1.113883.4.6&ISO^^^^NPI^^^^^^^^|_OBR-17_|||||_OBR-22_|||_OBR-25_|_OBR-26_|||_OBR-29_
-      - name: TESTOBX
-        template: OBX|_OBX-1_|_OBX-2_|_OBX-3.1_^_OBX-3.2_^_OBX-3.3_|_OBX-4_|_OBX-5_|_OBX-6_|_OBX-7_|_OBX-8_|||_OBX-11_||||_OBX-15.1_^_OBX-15.2_^CLIA||_OBX-17.1_~^^^^^^^^_OBX-17.9_|_OBX-18_|_OBX-19_||||_OBX-23.1_^^^^^CLIA&2.16.840.1.113883.4.7&ISO^XX^^^_OBX-23.10_|_OBX-24.1_^_OBX-24.2_^_OBX-24.3_^_OBX-24.4_^_OBX-24.5_^USA^^^_OBX-24.9_
-      - name: SPM
-        template: SPM|1|_SPM-2.1.1_&_SPM-2.1.2_^_SPM-2.2.1_&_SPM-2.2.2_&_SPM-2.2.3_&ISO||_SPM-4.1_^_SPM-4.2_^_SPM-4.3_^^^^^^_SPM-4.9_||||_SPM-8.1_^_SPM-8.2_^_SPM-8.3_^^^^^^_SPM-8.9_|||||||||_SPM-17.1_|_SPM-18_
-      - name: PID
-        template: PID|1||_PID-3.1-1_^^^_PID-3.4.1-1_&_PID-3.4.2-1_&ISO^_PID-3.5-1_||_PID-5.1_^_PID-5.2_^_PID-5.3_^_PID-5.4_^^^||_PID-7_|_PID-8_||_PID-10_|_PID-11.1_^_PID-11.2_^_PID-11.3_^_PID-11.4_^_PID-11.5_^USA^^^_PID-11.9_||_PID-13_|||||||||_PID-22.2_|||||||_PID-29_|_PID-30_
     elements:
       - name: Abnormal_flag
         hl7_field: OBX-8

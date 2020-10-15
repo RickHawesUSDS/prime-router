@@ -5,7 +5,7 @@ import kotlin.test.*
 class MessageTests {
     @Test
     fun `test patternMatch`() {
-        val one = Schema(name = "one", elements = listOf(Element("a"), Element("b")))
+        val one = Schema(name = "one", elements = listOf(Schema.Element("a"), Schema.Element("b")))
         val msg1 = Message(one, mapOf("a" to "1", "b" to "2"))
         assertEquals(true, msg1.patternMatch(mapOf("a" to "1")))
         assertEquals(false, msg1.patternMatch(mapOf("a" to "2")))
@@ -17,7 +17,7 @@ class MessageTests {
 
     @Test
     fun `test split one message`() {
-        val one = Schema(name = "one", elements = listOf(Element("a"), Element("b")))
+        val one = Schema(name = "one", elements = listOf(Schema.Element("a"), Schema.Element("b")))
         val msg1 = Message(one, mapOf("a" to "1", "b" to "2"))
         val rec1 = Receiver(
             "phd1",
@@ -31,7 +31,7 @@ class MessageTests {
 
     @Test
     fun `test split two messages`() {
-        val one = Schema(name = "one", elements = listOf(Element("a"), Element("b")))
+        val one = Schema(name = "one", elements = listOf(Schema.Element("a"), Schema.Element("b")))
         val msg1 = Message(one, mapOf("a" to "1", "b" to "2"))
         val msg2 = Message(one, mapOf("a" to "3", "b" to "4"))
         val rec1 = Receiver(
@@ -46,7 +46,7 @@ class MessageTests {
 
     @Test
     fun `test split two messages two ways`() {
-        val one = Schema(name = "one", elements = listOf(Element("a"), Element("b")))
+        val one = Schema(name = "one", elements = listOf(Schema.Element("a"), Schema.Element("b")))
         val msg1 = Message(one, mapOf("a" to "1", "b" to "2"))
         val msg2 = Message(one, mapOf("a" to "3", "b" to "4"))
         val rec1 = Receiver(
@@ -70,7 +70,7 @@ class MessageTests {
 
     @Test
     fun `test isValidCsv`() {
-        val one = Schema(name = "one", elements = listOf(Element("a"), Element("b")))
+        val one = Schema(name = "one", elements = listOf(Schema.Element("a"), Schema.Element("b")))
         val csvGood = listOf(listOf("a", "b"), listOf("1", "2"))
         val csvExtra = listOf(listOf("a", "b", "c"), listOf("1", "2", "3"))
         val csvBad = listOf(listOf("c", "b"), listOf("1", "2"))
@@ -81,7 +81,7 @@ class MessageTests {
 
     @Test
     fun `test buildColumnMap`() {
-        val one = Schema(name = "one", elements = listOf(Element("a"), Element("b")))
+        val one = Schema(name = "one", elements = listOf(Schema.Element("a"), Schema.Element("b")))
         val csvGood = listOf(listOf("a", "b"), listOf("1", "2"))
         assertNotNull(Message.buildColumnMap(one, csvGood))
         val csvReverse = listOf(listOf("b", "c", "a"), listOf("1", "2", "3"))
@@ -90,7 +90,7 @@ class MessageTests {
 
     @Test
     fun `test decodeCsv`() {
-        val one = Schema(name = "one", elements = listOf(Element("a"), Element("b")))
+        val one = Schema(name = "one", elements = listOf(Schema.Element("a"), Schema.Element("b")))
 
         val csvGood = listOf(listOf("a", "b"), listOf("1", "2"), listOf("3", "4"))
         val messages = Message.decodeCsv(one, csvGood)
@@ -108,7 +108,7 @@ class MessageTests {
 
     @Test
     fun `test encodeCsv`() {
-        val one = Schema(name = "one", elements = listOf(Element("a"), Element("b")))
+        val one = Schema(name = "one", elements = listOf(Schema.Element("a"), Schema.Element("b")))
         val csvGood = listOf(listOf("a", "b"), listOf("1", "2"), listOf("3", "4"))
         val messages = Message.decodeCsv(one, csvGood)
         val csvOut = Message.encodeCsv(messages)

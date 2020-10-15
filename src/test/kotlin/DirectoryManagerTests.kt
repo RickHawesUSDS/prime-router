@@ -29,8 +29,8 @@ class DirectoryManagerTests {
 
     @Test
     fun `test loading two schemas`() {
-        val one = Schema(name = "one", elements = listOf(Element("a")))
-        val two = Schema(name = "two", elements = listOf(Element("a"), Element("b")))
+        val one = Schema(name = "one", elements = listOf(Schema.Element("a")))
+        val two = Schema(name = "two", elements = listOf(Schema.Element("a"), Schema.Element("b")))
         DirectoryManager.loadSchemas(listOf(one, two))
         assertEquals(2, DirectoryManager.schemas.size)
         assertNotNull(DirectoryManager.schemas["one"])
@@ -38,8 +38,8 @@ class DirectoryManagerTests {
 
     @Test
     fun `test loading extended schema`() {
-        val one = Schema(name = "one", elements = listOf(Element("a")))
-        val two = Schema(name = "two", elements = listOf(Element("b"), Element("c")), extends = "one")
+        val one = Schema(name = "one", elements = listOf(Schema.Element("a")))
+        val two = Schema(name = "two", elements = listOf(Schema.Element("b"), Schema.Element("c")), extends = "one")
 
         DirectoryManager.loadSchemas(listOf(one, two))
         assertEquals(2, DirectoryManager.schemas.size)

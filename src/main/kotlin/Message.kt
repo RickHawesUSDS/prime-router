@@ -67,7 +67,7 @@ data class Message(
 
         fun encodeCsv(messages: List<Message>): CsvRows {
             if (messages.isEmpty()) return emptyList()
-            val elements: List<Element> = messages[0].schema.allElements
+            val elements: List<Schema.Element> = messages[0].schema.allElements
             val header: List<String> = elements.map { it.name }
             val rows: CsvRows = messages.map { message: Message ->
                 elements.map { (name) ->
@@ -92,12 +92,12 @@ data class Message(
             val output = receivers.map { it.key to ArrayList<Message>() }.toMap()
             messages.forEach { message ->
                 receivers.forEach { (key, receiver) ->
-                    receiver.topics.forEach { (schema, patterns) ->
-                        if (schema != message.schema.name) return@forEach
-                        if (message.patternMatch(patterns)) {
+                    receiver.topics.forEach(fun(topic: Receiver.Topic) {
+                        if (topic.schema != message.schema.name) return
+                        if (message.patternMatch(topic.patterns)) {
                             output[key]?.add(message)
                         }
-                    }
+                    })
                 }
             }
             return output

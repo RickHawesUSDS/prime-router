@@ -9,27 +9,27 @@ class ElementTests {
 
     @Test
     fun `create element`() {
-        val elem1 = Element(name = "first", type = Element.Type.NUMERIC)
+        val elem1 = Schema.Element(name = "first", type = Schema.Element.Type.NUMERIC)
         assertNotNull(elem1)
     }
 
     @Test
     fun `compare elements`() {
-        val elem1 = Element(name = "first", type = Element.Type.NUMERIC)
-        val elem2 = Element(name = "first", type = Element.Type.NUMERIC)
+        val elem1 = Schema.Element(name = "first", type = Schema.Element.Type.NUMERIC)
+        val elem2 = Schema.Element(name = "first", type = Schema.Element.Type.NUMERIC)
         assertEquals(elem1, elem2)
 
-        val elem3 = Element(name = "first", type = Element.Type.TEXT)
+        val elem3 = Schema.Element(name = "first", type = Schema.Element.Type.TEXT)
         assertNotEquals(elem1, elem3)
     }
 
-    @kotlin.test.Test
-    fun `test`() {
-        val elem1 = Element(name = "first", type = Element.Type.NUMERIC)
-        val elem2 = Element(name = "first", type = Element.Type.NUMERIC)
+    @Test
+    fun `test schema element`() {
+        val elem1 = Schema.Element(name = "first", type = Schema.Element.Type.NUMERIC)
+        val elem2 = Schema.Element(name = "first", type = Schema.Element.Type.NUMERIC)
         assertEquals(elem1, elem2)
 
-        val elem3 = Element(name = "first", type = Element.Type.TEXT)
+        val elem3 = Schema.Element(name = "first", type = Schema.Element.Type.TEXT)
         assertNotEquals(elem1, elem3)
     }
 }
