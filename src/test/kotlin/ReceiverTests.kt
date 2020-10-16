@@ -3,8 +3,8 @@ package gov.cdc.prime.router
 import java.io.ByteArrayInputStream
 import kotlin.test.*
 
-class DirectoryManagerTests {
-    val recieversYaml = """
+class ReceiverTests {
+    private val recieversYaml = """
             ---
             receivers:
               # Arizona PHD
@@ -18,13 +18,11 @@ class DirectoryManagerTests {
                     format: CSV
         """.trimIndent()
 
-
-
     @Test
     fun `test loading a receiver`() {
         val input = ByteArrayInputStream(recieversYaml.toByteArray())
-        DirectoryManager.loadReceiversList(input)
-        assertEquals(1, DirectoryManager.receivers.size)
-        assertEquals(2, DirectoryManager.receivers["phd1"]!!.topics[0].patterns.size)
+        Receiver.loadReceiversList(input)
+        assertEquals(1, Receiver.receivers.size)
+        assertEquals(2, Receiver.receivers["phd1"]!!.topics[0].patterns.size)
     }
 }

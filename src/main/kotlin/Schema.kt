@@ -75,18 +75,16 @@ data class Schema(
             fun addSchemasInADirectory(dirSubPath: String) {
                 val schemaExtFilter = FilenameFilter { _: File, name: String -> name.endsWith(schemaExtension) }
                 val dir = File(rootDir.absolutePath, dirSubPath)
-                var files = dir.listFiles(schemaExtFilter) ?: return
+                val files = dir.listFiles(schemaExtFilter) ?: return
                 files.forEach {
                     val schema = mapper.readValue<Schema>(it.inputStream())
                     val fullName = if (dirSubPath.isEmpty()) schema.name else dirSubPath + "/" + schema.name
                     newSchemas[fullName] = schema
                 }
 
-                var subDirs = dir.listFiles(FileFilter { file ->
-                    file.isDirectory
-                }) ?: return
+                val subDirs = dir.listFiles { file -> file.isDirectory } ?: return
                 subDirs.forEach {
-                    addSchemasInADirectory(dirSubPath + "/" + it.name)
+                    addSchemasInADirectory(if (dirSubPath.isEmpty()) it.name else dirSubPath + "/" + it.name)
                 }
             }
 

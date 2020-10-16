@@ -38,7 +38,7 @@ class RouterCli : CliktCommand(name = "prime", help = "Send health messages to t
                     inputSchemas!![i]
                 else
                     inputSchemas!!.last()
-            val schema = DirectoryManager.schemas[schemaName] ?: error("Cannot find the $schemaName schema")
+            val schema = Schema.schemas[schemaName] ?: error("Cannot find the $schemaName schema")
 
             val messages = readBlock(schema, file.inputStream())
 
@@ -84,7 +84,7 @@ class RouterCli : CliktCommand(name = "prime", help = "Send health messages to t
         echo("partition by receiver")
         val outputDataSets = ArrayList<DataSet>()
         input.forEach { (name, schema, inputMessages) ->
-            val output: Map<String, List<Message>> = Message.splitMessages(inputMessages, DirectoryManager.receivers)
+            val output: Map<String, List<Message>> = Message.splitMessages(inputMessages, Receiver.receivers)
             output.forEach { (receiver, splitMessages) ->
                 outputDataSets += DataSet("$receiver-${name}", schema, splitMessages)
             }
@@ -93,13 +93,13 @@ class RouterCli : CliktCommand(name = "prime", help = "Send health messages to t
     }
 
     private fun partitionByColumn(elementName: String, input: List<DataSet>): List<DataSet> {
-        return input
+        error("not implemented")
     }
 
     override fun run() {
         // Load the schema and receivers
         Schema.loadSchemaCatalog()
-        DirectoryManager.loadReceiversList()
+        Receiver.loadReceiversList()
         echo("Loaded schema and receivers")
 
         // Gather input datasets
