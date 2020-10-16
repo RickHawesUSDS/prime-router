@@ -1,0 +1,17 @@
+---
+name: covid-19
+extends: ~
+elements:
+  - name: lab
+  - name: first_name
+  - name: last_name
+  - name: state
+    type: TEXT
+    validation: ^[A-Z][A-Z]$
+  - name: test_time
+    type: DATE
+  - name: specimen_id
+    type: NUMERIC
+  - name: observation
+    type: TEXT
+    validation: covid-19:pos|covid-19:neg

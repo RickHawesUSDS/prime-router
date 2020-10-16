@@ -1,5 +1,13 @@
 package gov.cdc.prime.router
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.fasterxml.jackson.module.kotlin.readValue
+import java.io.File
+import java.io.FileFilter
+import java.io.FilenameFilter
+
 // A schema defines
 data class Schema(
     val name: String, // Name should include version
@@ -49,5 +57,54 @@ data class Schema(
     fun diffElements(otherSchema: Schema): List<Element> {
         // Kind of brute force, but simple
         return elements.filter { otherSchema.findElement(it.name) == null }
+    }
+
+    companion object {
+        val schemas get() = schemaStore
+
+        private val schemaStore = HashMap<String, Schema>()
+        private const val defaultCatalog = "./metadata/schemas"
+        private const val schemaExtension = ".yml"
+        private val mapper = ObjectMapper(YAMLFactory()).registerModule(KotlinModule())
+
+        // Load the schema catalog either from the default location or from the passed location
+        fun loadSchemaCatalog(catalog: String? = null) {
+            val newSchemas = HashMap<String, Schema>()
+            val rootDir = File(catalog ?: defaultCatalog)
+
+            fun addSchemasInADirectory(dirSubPath: String) {
+                val schemaExtFilter = FilenameFilter { _: File, name: String -> name.endsWith(schemaExtension) }
+                val dir = File(rootDir.absolutePath, dirSubPath)
+                var files = dir.listFiles(schemaExtFilter) ?: return
+                files.forEach {
+                    val schema = mapper.readValue<Schema>(it.inputStream())
+                    val fullName = if (dirSubPath.isEmpty()) schema.name else dirSubPath + "/" + schema.name
+                    newSchemas[fullName] = schema
+                }
+
+                var subDirs = dir.listFiles(FileFilter { file ->
+                    file.isDirectory
+                }) ?: return
+                subDirs.forEach {
+                    addSchemasInADirectory(dirSubPath + "/" + it.name)
+                }
+            }
+
+            if (!rootDir.isDirectory) error("Expected ${rootDir.absolutePath} to be a directory")
+            addSchemasInADirectory("")
+            loadSchemas(newSchemas)
+        }
+
+        fun loadSchemas(schemas: Map<String, Schema>) {
+            schemaStore.clear()
+            schemaStore.putAll(schemas)
+
+            // Fixup the parent references
+            schemaStore.forEach {
+                val parent = if (it.value.extends != null) schemaStore[it.value.extends] else null
+                schemaStore[it.key] = it.value.copy(parent = parent)
+            }
+        }
+
     }
 }

@@ -98,7 +98,7 @@ class RouterCli : CliktCommand(name = "prime", help = "Send health messages to t
 
     override fun run() {
         // Load the schema and receivers
-        DirectoryManager.loadSchemaCatalog()
+        Schema.loadSchemaCatalog()
         DirectoryManager.loadReceiversList()
         echo("Loaded schema and receivers")
 
