@@ -25,4 +25,11 @@ class ReceiverTests {
         assertEquals(1, Receiver.receivers.size)
         assertEquals(2, Receiver.receivers["phd1"]!!.topics[0].patterns.size)
     }
+
+    @Test
+    fun `test loading a single receiver`() {
+        val input = ByteArrayInputStream(recieversYaml.toByteArray())
+        Receiver.loadReceivers(listOf(Receiver("foo", "foo bar")))
+        assertEquals(1, Receiver.receivers.size)
+    }
 }
