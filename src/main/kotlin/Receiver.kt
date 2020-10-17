@@ -47,6 +47,6 @@ data class Receiver(
             receiversStore.putAll(receivers.map { it.name to it }.toMap())
         }
 
-        private val receiversStore: MutableMap<String, Receiver> = HashMap<String, Receiver>()
+        private val receiversStore: MutableMap<String, Receiver> = HashMap()
     }
 }

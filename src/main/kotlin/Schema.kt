@@ -5,7 +5,6 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import java.io.File
-import java.io.FileFilter
 import java.io.FilenameFilter
 
 // A schema defines
@@ -18,6 +17,7 @@ data class Schema(
     data class Element(
         val name: String,
         val type: Type = Type.TEXT,
+        val dateFormat: String = "",
         val codeSystem: CodeSystem = CodeSystem.NONE,
         val code: String = "",
         val optional: Boolean = true,
@@ -32,6 +32,7 @@ data class Schema(
             NUMERIC,
             DATE,
             CODED,
+            // Add types defined by HL7 with specific validation rules including DLN, SSN, ADDRESS,
         }
 
         enum class CodeSystem {

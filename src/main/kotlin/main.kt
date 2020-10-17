@@ -1,3 +1,5 @@
+@file:Suppress("unused", "unused")
+
 package gov.cdc.prime.router
 
 import com.github.ajalt.clikt.core.CliktCommand
@@ -21,11 +23,8 @@ class RouterCli : CliktCommand(name = "prime", help = "Send health messages to t
     private val outputDir by option("--output_dir", help = "<directory>")
     private val outputSchema by option("--output_schema", help = "<schema_name> or use input schema if not specified")
 
-
-    data class DataSet(val name: String, val schema: Schema, val messages: List<Message>)
-
-    private fun readDataSetsFromFile(readBlock: (schema: Schema, stream: InputStream) -> List<Message>): List<DataSet> {
-        val inputDataSets = ArrayList<DataSet>()
+    private fun readMappableTablesFromFile(readBlock: (name: String, schema: Schema, stream: InputStream) -> MappableTable): List<MappableTable> {
+        val inputMappableTables = ArrayList<MappableTable>()
         if (inputSchemas == null) error("Schema is not specified. Use the --inputSchema option")
         for (i in 0 until (inputFiles?.size ?: 0)) {
             val fileName = inputFiles!![i]
@@ -40,26 +39,24 @@ class RouterCli : CliktCommand(name = "prime", help = "Send health messages to t
                     inputSchemas!!.last()
             val schema = Schema.schemas[schemaName] ?: error("Cannot find the $schemaName schema")
 
-            val messages = readBlock(schema, file.inputStream())
-
-            inputDataSets.add(DataSet(file.name, schema, messages))
+            inputMappableTables.add(readBlock(file.name, schema, file.inputStream()))
         }
-        return inputDataSets
+        return inputMappableTables
     }
 
-    private fun writeDataSetsToFile(
-        dataSets: List<DataSet>,
-        writeBlock: (schema: Schema, messages: List<Message>, stream: OutputStream) -> Unit
+    private fun writeMappableTablesToFile(
+        tables: List<MappableTable>,
+        writeBlock: (table: MappableTable, stream: OutputStream) -> Unit
     ) {
         if (outputDir == null && outputFile == null) return
-        dataSets.forEach { (name, schema, messages) ->
-            val outputFile = File((outputDir ?: ".") + "/${name}")
+        tables.forEach { table ->
+            val outputFile = File((outputDir ?: ".") + "/${table.name}")
             echo("Write to: ${outputFile.absolutePath}")
             if (!outputFile.exists()) {
                 outputFile.createNewFile()
             }
             outputFile.outputStream().use {
-                writeBlock(schema, messages, it)
+                writeBlock(table, it)
             }
         }
     }
@@ -80,19 +77,21 @@ class RouterCli : CliktCommand(name = "prime", help = "Send health messages to t
         }
     }
 
-    private fun partitionByReceivers(input: List<DataSet>): List<DataSet> {
+    private fun partitionByReceivers(input: List<MappableTable>): List<MappableTable> {
         echo("partition by receiver")
-        val outputDataSets = ArrayList<DataSet>()
+        /* TODO
+        val outputMappableTables = ArrayList<MappableTable>()
         input.forEach { (name, schema, inputMessages) ->
-            val output: Map<String, List<Message>> = Message.splitMessages(inputMessages, Receiver.receivers)
+            val output: Map<String, List<gov.cdc.prime.router.MappableTable>> = MappableTable.splitMessages(inputMessages, Receiver.receivers)
             output.forEach { (receiver, splitMessages) ->
-                outputDataSets += DataSet("$receiver-${name}", schema, splitMessages)
+                outputMappableTables += MappableTable("$receiver-${name}", schema, splitMessages)
             }
         }
-        return outputDataSets
+         */
+        error("not implemented")
     }
 
-    private fun partitionByColumn(elementName: String, input: List<DataSet>): List<DataSet> {
+    private fun partitionByColumn(elementName: String, input: List<MappableTable>): List<MappableTable> {
         error("not implemented")
     }
 
@@ -102,21 +101,21 @@ class RouterCli : CliktCommand(name = "prime", help = "Send health messages to t
         Receiver.loadReceiversList()
         echo("Loaded schema and receivers")
 
-        // Gather input datasets
-        val inputDataSets = readDataSetsFromFile { schema, stream ->
-            Message.readCsv(schema, stream)
+        // Gather input tables
+        val inputMappableTables = readMappableTablesFromFile { name, schema, stream ->
+            MappableTable(name, schema, stream, MappableTable.StreamType.CSV)
         }
 
-        // Transform datasets
-        val outputDataSets: List<DataSet> = when {
-            route -> partitionByReceivers(inputDataSets)
-            partitionBy != null -> partitionByColumn("", inputDataSets)
-            else -> inputDataSets
+        // Transform tables
+        val outputMappableTables: List<MappableTable> = when {
+            route -> partitionByReceivers(inputMappableTables)
+            partitionBy != null -> partitionByColumn("", inputMappableTables)
+            else -> inputMappableTables
         }
 
-        // Output datasets
-        writeDataSetsToFile(outputDataSets) { _, messages, stream ->
-            Message.writeCsv(stream, messages)
+        // Output tables
+        writeMappableTablesToFile(outputMappableTables) { table, stream ->
+            table.write(stream, MappableTable.StreamType.CSV)
         }
     }
 }
