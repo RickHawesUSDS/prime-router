@@ -9,16 +9,13 @@ import java.io.InputStream
 
 data class Receiver(
     val name: String,
+    val schema: String,
     val description: String = "",
-    val topics: List<Topic> = emptyList(),
+    val patterns: Map<String, String> = emptyMap(),
+    val transforms: Map<String, String> = emptyMap(),
+    val address: String = "",
+    val format: TopicFormat = TopicFormat.CSV
 ) {
-    data class Topic(
-        val schema: String,
-        val patterns: Map<String, String> = emptyMap(),
-        val transforms: Map<String, String> = emptyMap(),
-        val address: String,
-        val format: TopicFormat = TopicFormat.CSV
-    )
 
     enum class TopicFormat {
         CSV,
@@ -29,7 +26,7 @@ data class Receiver(
     companion object {
         const val defaultReceivers = "metadata/recievers.yml"
 
-        val receivers get() = receiversStore
+        val receivers: List<Receiver> get() = receiversStore
         private val mapper = ObjectMapper(YAMLFactory()).registerModule(KotlinModule())
 
         data class ReceiversList(
@@ -43,10 +40,13 @@ data class Receiver(
         }
 
         fun loadReceivers(receivers: List<Receiver>) {
-            receiversStore.clear()
-            receiversStore.putAll(receivers.map { it.name to it }.toMap())
+            receiversStore = receivers
         }
 
-        private val receiversStore: MutableMap<String, Receiver> = HashMap()
+        fun get(name: String): Receiver? {
+            return receiversStore.first { it.name == name }
+        }
+
+        private var receiversStore: List<Receiver> = ArrayList()
     }
 }

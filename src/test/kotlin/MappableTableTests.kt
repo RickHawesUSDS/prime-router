@@ -5,97 +5,72 @@ import java.nio.charset.StandardCharsets
 import kotlin.test.*
 
 class MappableTableTests {
-    /*
-    @Test
-    fun `test patternMatch`() {
-        val one = Schema(name = "one", elements = listOf(Schema.Element("a"), Schema.Element("b")))
-        val table1 = MappableTable("test", one, listOf(listOf("1", "2")))
-        assertEquals (true, table1.patternMatch(mapOf("a" to "1"))
-        assertEquals(false, table1.patternMatch(mapOf("a" to "2")))
-        assertEquals(true, table1.patternMatch(mapOf("a" to ".*")))
-        assertEquals(true, table1.patternMatch(mapOf("a" to "1|2")))
-        assertEquals(true, table1.patternMatch(mapOf("a" to "1", "b" to "2")))
-        assertEquals(false, table1.patternMatch(mapOf("a" to "1", "b" to "3")))
-    }
-    */
 
-    /*
+
     @Test
-    fun `test split one message`() {
+    fun `test concat`() {
         val one = Schema(name = "one", elements = listOf(Schema.Element("a"), Schema.Element("b")))
-        val dataSet1 = MappableTable("example", one, mapOf("a" to "1", "b" to "2"))
-        val rec1 = Receiver(
-            "phd1",
-            topics = listOf(Receiver.Topic(schema = "one", patterns = mapOf("a" to "1"), address = "foo"))
+        val table1 = MappableTable("example1", one, listOf(listOf("1", "2"), listOf("3", "4")))
+        val table2 = MappableTable("example2", one, listOf(listOf("5", "6"), listOf("7", "8")))
+        val concatTable = table1.concat("concat", table2)
+        assertEquals(4, concatTable.rowCount)
+        assertEquals(2, table1.rowCount)
+        assertEquals("8", concatTable.getString(3, "b"))
+    }
+
+    @Test
+    fun `test filter`() {
+        val one = Schema(name = "one", elements = listOf(Schema.Element("a"), Schema.Element("b")))
+        val table1 = MappableTable("example", one, listOf(listOf("1", "2"), listOf("3", "4")))
+        assertEquals(2, table1.rowCount)
+        val filteredTable = table1.filter("filtered", mapOf("a" to "1"))
+        assertEquals("filtered", filteredTable.name)
+        assertEquals(one, filteredTable.schema)
+        assertEquals(1, filteredTable.rowCount)
+        assertEquals("2", filteredTable.getString(0, "b"))
+    }
+
+    @Test
+    fun `test filterByReceiver with One Receiver`() {
+        val schema1 = Schema(name = "test", elements = listOf(Schema.Element("a"), Schema.Element("b")))
+        val table1 = MappableTable("one", schema1, listOf(listOf("X", "1"), listOf("Y", "2"), listOf("Z", "3")))
+        val receiver1 = Receiver(
+            name = "rec1",
+            schema = "test",
+            patterns = mapOf("a" to "Y|Z")
         )
-        val split = MappableTable.splitMessages(listOf(dataSet1), receivers = mapOf(rec1.name to rec1))
-        assertNotNull(split[rec1.name])
-        assertEquals(1, split[rec1.name]?.size)
-        assertEquals(dataSet1, split[rec1.name]?.get(0))
+        val tables = table1.filterByReceiver(listOf(receiver1))
+        assertEquals(1, tables.size)
+        assertEquals("rec1-one", tables[0].name)
+        assertEquals(2, tables[0].rowCount)
     }
 
     @Test
-    fun `test split two messages`() {
-        val one = Schema(name = "one", elements = listOf(Schema.Element("a"), Schema.Element("b")))
-        val dataSet1 = MappableTable("test1", one, mapOf("a" to "1", "b" to "2"))
-        val dataSet2 = MappableTable("test2", one, mapOf("a" to "3", "b" to "4"))
-        val rec1 = Receiver(
-            "phd1",
-            topics = listOf(Receiver.Topic(schema = "one", patterns = mapOf("a" to "1"), address = "foo"))
+    fun `test filterByReceiver with Multiple Receivers`() {
+        val schema1 = Schema(name = "test", elements = listOf(Schema.Element("a"), Schema.Element("b")))
+        val table1 = MappableTable("one", schema1, listOf(listOf("X", "1"), listOf("Y", "2"), listOf("Z", "3")))
+        val receiver1 = Receiver(
+            name = "rec1",
+            schema = "test",
+            patterns = mapOf("a" to "X")
         )
-        val split = MappableTable.splitMessages(listOf(dataSet1, dataSet2), receivers = mapOf(rec1.name to rec1))
-        assertNotNull(split[rec1.name])
-        assertEquals(1, split[rec1.name]?.size)
-        assertEquals(dataSet1, split[rec1.name]?.get(0))
-    }
-
-    @Test
-    fun `test split two messages two ways`() {
-        val one = Schema(name = "one", elements = listOf(Schema.Element("a"), Schema.Element("b")))
-        val dataSet1 = MappableTable("test1", one, mapOf("a" to "1", "b" to "2"))
-        val dataSet2 = MappableTable("test2", one, mapOf("a" to "3", "b" to "4"))
-        val rec1 = Receiver(
-            "phd1",
-            topics = listOf(Receiver.Topic(schema = "one", patterns = mapOf("a" to "1"), address = "foo"))
+        val receiver2 = Receiver(
+            name = "rec2",
+            schema = "test",
+            patterns = mapOf("a" to "Y|Z")
         )
-        val rec2 = Receiver(
-            "phd2",
-            topics = listOf(Receiver.Topic(schema = "one", patterns = mapOf("a" to ".*"), address = "food"))
+        val receiver3 = Receiver(
+            name = "rec3",
+            schema = "test",
+            patterns = mapOf("a" to "W")
         )
-        val split = MappableTable.splitMessages(
-            listOf(dataSet1, dataSet2),
-            receivers = mapOf(rec1.name to rec1, rec2.name to rec2)
-        )
-        assertNotNull(split[rec1.name])
-        assertEquals(1, split[rec1.name]?.size)
-        assertEquals(dataSet1, split[rec1.name]?.get(0))
-        assertNotNull(split[rec2.name])
-        assertEquals(2, split[rec2.name]?.size)
-        assertEquals(dataSet1, split[rec2.name]?.get(0))
+        val tables = table1.filterByReceiver(listOf(receiver1, receiver2, receiver3))
+        assertEquals(3, tables.size)
+        assertEquals("rec1-one", tables[0].name)
+        assertEquals("rec2-one", tables[1].name)
+        assertEquals(1, tables[0].rowCount)
+        assertEquals(2, tables[1].rowCount)
     }
-
-    // CSV Tests
-
-    @Test
-    fun `test isValidCsv`() {
-        val one = Schema(name = "one", elements = listOf(Schema.Element("a"), Schema.Element("b")))
-        val csvGood = listOf(listOf("a", "b"), listOf("1", "2"))
-        val csvExtra = listOf(listOf("a", "b", "c"), listOf("1", "2", "3"))
-        val csvBad = listOf(listOf("c", "b"), listOf("1", "2"))
-        assertEquals(true, MappableTable.isValidCsv(one, csvGood))
-        assertEquals(true, MappableTable.isValidCsv(one, csvExtra))
-        assertEquals(false, MappableTable.isValidCsv(one, csvBad))
-    }
-
-    @Test
-    fun `test buildColumnMap`() {
-        val one = Schema(name = "one", elements = listOf(Schema.Element("a"), Schema.Element("b")))
-        val csvGood = listOf(listOf("a", "b"), listOf("1", "2"))
-        assertNotNull(MappableTable.buildColumnMap(one, csvGood))
-        val csvReverse = listOf(listOf("b", "c", "a"), listOf("1", "2", "3"))
-        assertNotNull(MappableTable.buildColumnMap(one, csvReverse))
-    }
-    */
 
     @Test
     fun `test isEmpty`() {
@@ -112,7 +87,6 @@ class MappableTableTests {
         val table1 = MappableTable("test", one, listOf(listOf("1", "2")))
         assertEquals("test", table1.name)
         assertEquals(one, table1.schema)
-        assertEquals(true, table1.isRaw)
         assertEquals(1, table1.rowCount)
     }
 
@@ -125,7 +99,6 @@ class MappableTableTests {
         """.trimIndent()
 
         val table1 = MappableTable("test", one, ByteArrayInputStream(csv.toByteArray()), MappableTable.StreamType.CSV)
-        assertEquals(true, table1.isRaw)
         assertEquals(1, table1.rowCount)
     }
 
@@ -142,5 +115,4 @@ class MappableTableTests {
         table1.write(output, MappableTable.StreamType.CSV)
         assertEquals(expectedCsv, output.toString(StandardCharsets.UTF_8))
     }
-
 }

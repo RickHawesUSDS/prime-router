@@ -79,16 +79,15 @@ class RouterCli : CliktCommand(name = "prime", help = "Send health messages to t
 
     private fun partitionByReceivers(input: List<MappableTable>): List<MappableTable> {
         echo("partition by receiver")
-        /* TODO
-        val outputMappableTables = ArrayList<MappableTable>()
-        input.forEach { (name, schema, inputMessages) ->
-            val output: Map<String, List<gov.cdc.prime.router.MappableTable>> = MappableTable.splitMessages(inputMessages, Receiver.receivers)
-            output.forEach { (receiver, splitMessages) ->
-                outputMappableTables += MappableTable("$receiver-${name}", schema, splitMessages)
+        if (input.isEmpty()) return emptyList()
+        var outputTables = input[0].filterByReceiver(Receiver.receivers)
+        for (i in 1 until input.size) {
+            val tablesForInput = input[i].filterByReceiver(Receiver.receivers)
+            outputTables = outputTables.mapIndexed { index, mappableTable ->
+                mappableTable.concat(mappableTable.name, tablesForInput[index])
             }
         }
-         */
-        error("not implemented")
+        return outputTables
     }
 
     private fun partitionByColumn(elementName: String, input: List<MappableTable>): List<MappableTable> {
