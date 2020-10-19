@@ -10,6 +10,7 @@ class ReceiverTests {
               # Arizona PHD
               - name: phd1
                 description: Arizona PHD
+                topic: covid-19
                 schema: covid-19
                 patterns: {observation: "covid-19:*", state: AZ}
                 transforms: {deidentify: false}
@@ -22,13 +23,12 @@ class ReceiverTests {
         val input = ByteArrayInputStream(receiversYaml.toByteArray())
         Receiver.loadReceiversList(input)
         assertEquals(1, Receiver.receivers.size)
-        assertEquals(2, Receiver.get("phd1")!!.patterns.size)
+        assertEquals(2, Receiver.get("phd1")?.patterns?.size)
     }
 
     @Test
     fun `test loading a single receiver`() {
-        val input = ByteArrayInputStream(receiversYaml.toByteArray())
-        Receiver.loadReceivers(listOf(Receiver("foo", "foo bar")))
+        Receiver.loadReceivers(listOf(Receiver("name", "topic", "schema")))
         assertEquals(1, Receiver.receivers.size)
     }
 }

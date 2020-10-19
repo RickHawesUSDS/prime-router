@@ -1,6 +1,6 @@
 ---
 name: lab_test_results_schema
-extends: ~
+topic: test
 elements:
   - name: lab
   - name: first_name

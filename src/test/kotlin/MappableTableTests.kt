@@ -5,11 +5,9 @@ import java.nio.charset.StandardCharsets
 import kotlin.test.*
 
 class MappableTableTests {
-
-
     @Test
     fun `test concat`() {
-        val one = Schema(name = "one", elements = listOf(Schema.Element("a"), Schema.Element("b")))
+        val one = Schema(name = "one", topic = "test", elements = listOf(Schema.Element("a"), Schema.Element("b")))
         val table1 = MappableTable("example1", one, listOf(listOf("1", "2"), listOf("3", "4")))
         val table2 = MappableTable("example2", one, listOf(listOf("5", "6"), listOf("7", "8")))
         val concatTable = table1.concat("concat", table2)
@@ -20,7 +18,7 @@ class MappableTableTests {
 
     @Test
     fun `test filter`() {
-        val one = Schema(name = "one", elements = listOf(Schema.Element("a"), Schema.Element("b")))
+        val one = Schema(name = "one", topic = "test", elements = listOf(Schema.Element("a"), Schema.Element("b")))
         val table1 = MappableTable("example", one, listOf(listOf("1", "2"), listOf("3", "4")))
         assertEquals(2, table1.rowCount)
         val filteredTable = table1.filter("filtered", mapOf("a" to "1"))
@@ -32,14 +30,15 @@ class MappableTableTests {
 
     @Test
     fun `test filterByReceiver with One Receiver`() {
-        val schema1 = Schema(name = "test", elements = listOf(Schema.Element("a"), Schema.Element("b")))
+        val schema1 = Schema(name = "test", topic = "test", elements = listOf(Schema.Element("a"), Schema.Element("b")))
         val table1 = MappableTable("one", schema1, listOf(listOf("X", "1"), listOf("Y", "2"), listOf("Z", "3")))
         val receiver1 = Receiver(
             name = "rec1",
+            topic = "test",
             schema = "test",
             patterns = mapOf("a" to "Y|Z")
         )
-        val tables = table1.filterByReceiver(listOf(receiver1))
+        val tables = table1.routeByReceiver(listOf(receiver1))
         assertEquals(1, tables.size)
         assertEquals("rec1-one", tables[0].name)
         assertEquals(2, tables[0].rowCount)
@@ -47,24 +46,27 @@ class MappableTableTests {
 
     @Test
     fun `test filterByReceiver with Multiple Receivers`() {
-        val schema1 = Schema(name = "test", elements = listOf(Schema.Element("a"), Schema.Element("b")))
+        val schema1 = Schema(name = "test", topic = "test", elements = listOf(Schema.Element("a"), Schema.Element("b")))
         val table1 = MappableTable("one", schema1, listOf(listOf("X", "1"), listOf("Y", "2"), listOf("Z", "3")))
         val receiver1 = Receiver(
             name = "rec1",
+            topic = "test",
             schema = "test",
             patterns = mapOf("a" to "X")
         )
         val receiver2 = Receiver(
             name = "rec2",
+            topic = "test",
             schema = "test",
             patterns = mapOf("a" to "Y|Z")
         )
         val receiver3 = Receiver(
             name = "rec3",
+            topic = "test",
             schema = "test",
             patterns = mapOf("a" to "W")
         )
-        val tables = table1.filterByReceiver(listOf(receiver1, receiver2, receiver3))
+        val tables = table1.routeByReceiver(listOf(receiver1, receiver2, receiver3))
         assertEquals(3, tables.size)
         assertEquals("rec1-one", tables[0].name)
         assertEquals("rec2-one", tables[1].name)
@@ -74,7 +76,7 @@ class MappableTableTests {
 
     @Test
     fun `test isEmpty`() {
-        val one = Schema(name = "one", elements = listOf(Schema.Element("a"), Schema.Element("b")))
+        val one = Schema(name = "one", topic = "test", elements = listOf(Schema.Element("a"), Schema.Element("b")))
         val emptyTable = MappableTable("test", one)
         assertEquals(true, emptyTable.isEmpty())
         val table1 = MappableTable("test", one, listOf(listOf("1", "2")))
@@ -83,7 +85,7 @@ class MappableTableTests {
 
     @Test
     fun `test create with list`() {
-        val one = Schema(name = "one", elements = listOf(Schema.Element("a"), Schema.Element("b")))
+        val one = Schema(name = "one", topic = "test", elements = listOf(Schema.Element("a"), Schema.Element("b")))
         val table1 = MappableTable("test", one, listOf(listOf("1", "2")))
         assertEquals("test", table1.name)
         assertEquals(one, table1.schema)
@@ -92,7 +94,7 @@ class MappableTableTests {
 
     @Test
     fun `test create from csv`() {
-        val one = Schema(name = "one", elements = listOf(Schema.Element("a"), Schema.Element("b")))
+        val one = Schema(name = "one", topic = "test", elements = listOf(Schema.Element("a"), Schema.Element("b")))
         val csv = """
             a,b
             1,2
@@ -104,7 +106,7 @@ class MappableTableTests {
 
     @Test
     fun `test write as csv`() {
-        val one = Schema(name = "one", elements = listOf(Schema.Element("a"), Schema.Element("b")))
+        val one = Schema(name = "one", topic = "test", elements = listOf(Schema.Element("a"), Schema.Element("b")))
         val table1 = MappableTable("test", one, listOf(listOf("1", "2")))
         val expectedCsv = """
             a,b
@@ -114,5 +116,41 @@ class MappableTableTests {
         val output = ByteArrayOutputStream()
         table1.write(output, MappableTable.StreamType.CSV)
         assertEquals(expectedCsv, output.toString(StandardCharsets.UTF_8))
+    }
+
+    @Test
+    fun `test applyMapping`() {
+        val one = Schema(name = "one", topic = "test", elements = listOf(Schema.Element("a"), Schema.Element("b")))
+        val two = Schema(name = "two", topic = "test", elements = listOf(Schema.Element("B")))
+
+        val oneTable =
+            MappableTable(name = "one", schema = one, values = listOf(listOf("a1", "b1"), listOf("a2", "b2")))
+        assertEquals(2, oneTable.rowCount)
+        val mappingOneToTwo = one.buildMapping(toSchema = two)
+
+        val twoTable = oneTable.applyMapping(name = "two", mappingOneToTwo)
+        assertEquals(2, twoTable.rowCount)
+        assertEquals("two", twoTable.name)
+        assertEquals("b2", twoTable.getString(1, "B"))
+    }
+
+    @Test
+    fun `test applyMapping with default`() {
+        val one = Schema(
+            name = "one",
+            topic = "test",
+            elements = listOf(Schema.Element("a", default = "~"), Schema.Element("b"))
+        )
+        val two = Schema(name = "two", topic = "test", elements = listOf(Schema.Element("B")))
+
+        val twoTable =
+            MappableTable(name = "one", schema = two, values = listOf(listOf("b1"), listOf("b2")))
+        assertEquals(2, twoTable.rowCount)
+        val mappingTwoToOne = two.buildMapping(toSchema = one)
+
+        val oneTable = twoTable.applyMapping(name = "one", mappingTwoToOne)
+        assertEquals(2, oneTable.rowCount)
+        assertEquals("~", oneTable.getString(0, colName = "a"))
+        assertEquals("b2", oneTable.getString(1, colName = "b"))
     }
 }

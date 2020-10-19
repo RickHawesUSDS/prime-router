@@ -69,7 +69,7 @@ class MappableTable {
         return table.rowCount() == 0
     }
 
-    fun getString(row: Int, colName: String, ): String? {
+    fun getString(row: Int, colName: String): String? {
         return table.getString(row, colName)
     }
 
@@ -97,10 +97,38 @@ class MappableTable {
         return MappableTable(name, this.schema, filteredTable)
     }
 
-    fun filterByReceiver(receivers: List<Receiver>): List<MappableTable> {
-        return receivers.mapNotNull { receiver: Receiver ->
-            if (receiver.schema != schema.name) return@mapNotNull null
-            filter("${receiver.name}-${name}", receiver.patterns)
+    fun routeByReceiver(receivers: List<Receiver>): List<MappableTable> {
+        val onTopicReceivers = receivers.filter { it.topic == schema.topic }
+        return onTopicReceivers.map { receiver: Receiver ->
+            val outputName = "${receiver.name}-${name}"
+            val input: MappableTable = if (receiver.schema != schema.name) {
+                val toSchema =
+                    Schema.schemas[receiver.schema] ?: error("${receiver.schema} schema is missing from catalog")
+                val mapping = schema.buildMapping(toSchema)
+                this.applyMapping(outputName, mapping)
+            } else {
+                this
+            }
+            input.filter(name = outputName, patterns = receiver.patterns)
+        }
+    }
+
+    fun applyMapping(name: String, mapping: Schema.Mapping): MappableTable {
+        val columns = mapping.toSchema.elements.map { buildColumn(mapping, it) }
+        val newTable = Table.create(columns)
+        return MappableTable(name, mapping.toSchema, newTable)
+    }
+
+    private fun buildColumn(mapping: Schema.Mapping, toElement: Schema.Element): StringColumn {
+        return when (toElement.name) {
+            in mapping.useFromName -> {
+                table.stringColumn(mapping.useFromName[toElement.name]).copy().setName(toElement.name)
+            }
+            in mapping.useDefault -> {
+                val defaultValues = Array(table.rowCount()) { (toElement.default ?: "") }
+                StringColumn.create(toElement.name, defaultValues.asList())
+            }
+            else -> error("missing mapping for element: ${toElement.name}")
         }
     }
 }

@@ -1,5 +1,6 @@
 ---
 name: aphl-covid-19
+topic: covid-19
 elements:
   - name: Abnormal_flag
     hl7_field: OBX-8

@@ -80,18 +80,14 @@ class RouterCli : CliktCommand(name = "prime", help = "Send health messages to t
     private fun partitionByReceivers(input: List<MappableTable>): List<MappableTable> {
         echo("partition by receiver")
         if (input.isEmpty()) return emptyList()
-        var outputTables = input[0].filterByReceiver(Receiver.receivers)
+        var outputTables = input[0].routeByReceiver(Receiver.receivers)
         for (i in 1 until input.size) {
-            val tablesForInput = input[i].filterByReceiver(Receiver.receivers)
+            val tablesForInput = input[i].routeByReceiver(Receiver.receivers)
             outputTables = outputTables.mapIndexed { index, mappableTable ->
                 mappableTable.concat(mappableTable.name, tablesForInput[index])
             }
         }
         return outputTables
-    }
-
-    private fun partitionByColumn(elementName: String, input: List<MappableTable>): List<MappableTable> {
-        error("not implemented")
     }
 
     override fun run() {
@@ -108,7 +104,7 @@ class RouterCli : CliktCommand(name = "prime", help = "Send health messages to t
         // Transform tables
         val outputMappableTables: List<MappableTable> = when {
             route -> partitionByReceivers(inputMappableTables)
-            partitionBy != null -> partitionByColumn("", inputMappableTables)
+            partitionBy != null -> error("Not implemented")
             else -> inputMappableTables
         }
 

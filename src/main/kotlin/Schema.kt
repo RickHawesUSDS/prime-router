@@ -10,9 +10,8 @@ import java.io.FilenameFilter
 // A schema defines
 data class Schema(
     val name: String, // Name should include version
+    val topic: String,
     val elements: List<Element> = emptyList(),
-    val extends: String? = null,
-    val parent: Schema? = null, // fixup after loading into manager
 ) {
     data class Element(
         val name: String,
@@ -21,6 +20,7 @@ data class Schema(
         val codeSystem: CodeSystem = CodeSystem.NONE,
         val code: String = "",
         val optional: Boolean = true,
+        val default: String? = "",
         val validation: String? = null,
         val hl7_field: String? = null,
         val hl7_operation: String? = null,
@@ -42,26 +42,53 @@ data class Schema(
         }
     }
 
-    val allElements: List<Element>
-        get() {
-            return if (parent == null) elements else parent.allElements + elements
-        }
+    data class Mapping(
+        val toSchema: Schema,
+        val fromSchema: Schema,
+        val useFromName: Map<String, String>,
+        val useDefault: Set<String>,
+        val missing: Set<String>
+    )
 
     fun findElement(name: String): Element? {
-        return elements.find { it.name == name } ?: parent?.findElement(name)
+        return elements.find { it.name == name }
     }
 
-    fun unionElements(otherSchema: Schema): List<Element> {
-        return elements + otherSchema.diffElements(this)
+    fun buildMapping(toSchema: Schema): Mapping {
+        if (toSchema.topic != this.topic) error("Trying to match schema with different topics")
+        val useFromName = HashMap<String, String>()
+        val useDefault = HashSet<String>()
+        val missing = HashSet<String>()
+        toSchema.elements.forEach {
+            val mappedName = findMatchingElement(it)
+            if (mappedName != null) {
+                useFromName[it.name] = mappedName
+            } else {
+                if (it.optional) {
+                    useDefault.add(it.name)
+                } else {
+                    missing.add(it.name)
+                }
+            }
+        }
+        return Mapping(toSchema, this, useFromName, useDefault, missing)
     }
 
-    fun diffElements(otherSchema: Schema): List<Element> {
-        // Kind of brute force, but simple
-        return elements.filter { otherSchema.findElement(it.name) == null }
+    private fun findMatchingElement(matchElement: Element): String? {
+        // TODO: Much more can be done here
+        val matchName = normalizeName(matchElement.name)
+        for (element in elements) {
+            if (matchName == normalizeName(element.name)) return element.name
+        }
+        return null
+    }
+
+    private fun normalizeName(name: String): String {
+        return name.replace("_|\\s".toRegex(),"").toLowerCase()
     }
 
     companion object {
-        val schemas get() = schemaStore
+        val schemas: Map<String, Schema> get() = schemaStore
 
         private val schemaStore = HashMap<String, Schema>()
         private const val defaultCatalog = "./metadata/schemas"
@@ -97,13 +124,6 @@ data class Schema(
         fun loadSchemas(schemas: Map<String, Schema>) {
             schemaStore.clear()
             schemaStore.putAll(schemas)
-
-            // Fixup the parent references
-            schemaStore.forEach {
-                val parent = if (it.value.extends != null) schemaStore[it.value.extends] else null
-                schemaStore[it.key] = it.value.copy(parent = parent)
-            }
         }
-
     }
 }

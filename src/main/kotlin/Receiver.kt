@@ -9,6 +9,7 @@ import java.io.InputStream
 
 data class Receiver(
     val name: String,
+    val topic: String,
     val schema: String,
     val description: String = "",
     val patterns: Map<String, String> = emptyMap(),
