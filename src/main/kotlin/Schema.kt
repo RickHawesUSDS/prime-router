@@ -21,6 +21,7 @@ data class Schema(
         val code: String = "",
         val optional: Boolean = true,
         val default: String? = "",
+        val pii: Boolean = false,
         val validation: String? = null,
         val hl7_field: String? = null,
         val hl7_operation: String? = null,

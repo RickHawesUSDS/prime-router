@@ -109,9 +109,31 @@ class MappableTable {
             } else {
                 this
             }
-            input.filter(name = outputName, patterns = receiver.patterns)
+            val filtered = input.filter(name = outputName, patterns = receiver.patterns)
+            var transformed = filtered
+            receiver.transforms.forEach { (transform, transformValue) ->
+                when (transform) {
+                    "deidentify" -> if (transformValue == "true") {
+                        transformed = transformed.deidentify()
+                    }
+                }
+            }
+            transformed
         }
     }
+
+    fun deidentify(): MappableTable {
+        val columns = schema.elements.map {
+            if (it.pii) {
+                createDefaultColumn(it)
+            } else {
+                table.column(it.name).copy()
+            }
+        }
+        return MappableTable(name, schema, Table.create(columns))
+    }
+
+
 
     fun applyMapping(name: String, mapping: Schema.Mapping): MappableTable {
         val columns = mapping.toSchema.elements.map { buildColumn(mapping, it) }
@@ -125,10 +147,15 @@ class MappableTable {
                 table.stringColumn(mapping.useFromName[toElement.name]).copy().setName(toElement.name)
             }
             in mapping.useDefault -> {
-                val defaultValues = Array(table.rowCount()) { (toElement.default ?: "") }
-                StringColumn.create(toElement.name, defaultValues.asList())
+                createDefaultColumn(toElement)
             }
             else -> error("missing mapping for element: ${toElement.name}")
         }
     }
+
+    private fun createDefaultColumn(element: Schema.Element): StringColumn {
+        val defaultValues = Array(table.rowCount()) { (element.default ?: "") }
+        return StringColumn.create(element.name, defaultValues.asList())
+    }
+
 }

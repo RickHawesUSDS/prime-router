@@ -153,4 +153,21 @@ class MappableTableTests {
         assertEquals("~", oneTable.getString(0, colName = "a"))
         assertEquals("b2", oneTable.getString(1, colName = "b"))
     }
+
+    @Test
+    fun `test deidentify`() {
+        val one = Schema(
+            name = "one",
+            topic = "test",
+            elements = listOf(Schema.Element("a", pii = true), Schema.Element("b"))
+        )
+
+        val oneTable =
+            MappableTable(name = "one", schema = one, values = listOf(listOf("a1", "b1"), listOf("a2", "b2")))
+
+        val oneDeidentified = oneTable.deidentify()
+        assertEquals(2, oneDeidentified.rowCount)
+        assertEquals("", oneDeidentified.getString(0, "a"))
+        assertEquals("b1", oneDeidentified.getString(0, "b"))
+    }
 }

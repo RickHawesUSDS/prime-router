@@ -4,7 +4,9 @@ topic: covid-19
 elements:
   - name: lab
   - name: first_name
+    pii: true
   - name: last_name
+    pii: true
   - name: state
     type: TEXT
     validation: ^[A-Z][A-Z]$
