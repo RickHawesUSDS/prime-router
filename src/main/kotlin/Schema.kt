@@ -7,12 +7,15 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import java.io.File
 import java.io.FilenameFilter
 
-// A schema defines
+// A PRIME schema contains a collection of data elements, mappings, validations and standard algorithms
+// needed to translate data to the form that a public health authority needs
+//
 data class Schema(
     val name: String, // Name should include version
     val topic: String,
     val elements: List<Element> = emptyList(),
 ) {
+    // The element is the fundamental data element of the schema
     data class Element(
         val name: String,
         val type: Type = Type.TEXT,
@@ -93,7 +96,7 @@ data class Schema(
 
         private val schemaStore = HashMap<String, Schema>()
         private const val defaultCatalog = "./metadata/schemas"
-        private const val schemaExtension = ".yml"
+        private const val schemaExtension = ".schema"
         private val mapper = ObjectMapper(YAMLFactory()).registerModule(KotlinModule())
 
         // Load the schema catalog either from the default location or from the passed location
