@@ -9,17 +9,21 @@ The project is a joint effort between the CDC and USDS.
 Currently, we are focusing on the problem of delivering COVID-19 test data to public health departments. 
 Later, we will work on other tools to analyze and explore this data and different types of health data.  
 
-## Related and Sub-projects
+Other PRIME repositories include
+- [PRIME-Central](https://github.com/CDCgov/prime-central): a place we keep common files and documents
+- [PRIME-Data-Input-Client](https://github.com/CDCgov/prime-data-input-client): The POC COVID-19 test data input application that will use the data router
 
-TODO: Will be breaking up into sub-projects for different scenarios
+## Current Status
 
-- Rosetta - a library for matching and mapping public health data
-- CLI - the `prime` command line tool to use the Rosetta library
-- Router - Mirth channels for senders and receivers 
-- Monitoring - A service which monitors transmission through router channels
-- Auth - A service for senders and receivers authentication
-- Prime Central - A repository that contains mapping metadata for Rosetta
- 
+Our current goal is building a prototype that takes fake data form the POC app and sends it to a public health department. 
+Features of the prototype include:
+
+- Ability to route standard CSV from AZ and FL
+- Ability to convert CSV to HL7 message
+- Ability to send to an SFTP folder
+
+The full feature set is kept in the repositories project folder. 
+
 ## Public Domain Standard Notice
 This repository constitutes a work of the United States Government and is not
 subject to domestic copyright protection under 17 USC § 105. This repository is in
