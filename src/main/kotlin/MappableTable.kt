@@ -2,6 +2,8 @@
 
 package gov.cdc.prime.router
 
+import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
+import com.github.doyaaaaaken.kotlincsv.dsl.csvWriter
 import tech.tablesaw.api.ColumnType
 import tech.tablesaw.api.StringColumn
 import tech.tablesaw.api.Table
@@ -26,10 +28,10 @@ class MappableTable {
     constructor(name: String, schema: Schema, values: List<List<String>> = emptyList()) {
         this.name = name
         this.schema = schema
-        this.table = Table.create(name, valuesToRawColumns(schema, values))
+        this.table = Table.create(name, valuesToColumns(schema, values))
     }
 
-    private fun valuesToRawColumns(schema: Schema, values: List<List<String>>): List<Column<*>> {
+    private fun valuesToColumns(schema: Schema, values: List<List<String>>): List<Column<*>> {
         return schema.elements.mapIndexed { index, element ->
             StringColumn.create(
                 element.name,
@@ -43,15 +45,23 @@ class MappableTable {
         this.schema = schema
 
         when (streamType) {
-            StreamType.CSV ->
-                this.table = Table.read().usingOptions(
-                    CsvReadOptions.builder(csvInputStream)
-                        .separator(',')
-                        .lineEnding("\n")
-                        .header(true)
-                        .columnTypes(Array(schema.elements.size) { ColumnType.STRING })
-                        .build()
-                )
+            StreamType.CSV -> {
+                // Read in the file
+                val rows: List<List<String>> = csvReader().readAll(csvInputStream)
+                if (rows.isEmpty()) error("Empty input stream")
+
+                // Check column names
+                schema.elements.forEachIndexed { index, element ->
+                    val header = rows[0]
+                    if (index >= header.size ||
+                        (header[index] != element.csv_field && header[index] != element.name)
+                    ) {
+                        error("Element ${element.name} is not found in the input stream header")
+                    }
+                }
+
+                this.table = Table.create(valuesToColumns(schema, rows.subList(1, rows.size)))
+            }
         }
     }
 
@@ -77,7 +87,17 @@ class MappableTable {
         if (isEmpty()) return
 
         when (streamType) {
-            StreamType.CSV -> table.write().csv(outputStream)
+            StreamType.CSV -> {
+                val allRows = mutableListOf(schema.elements.map { it.csv_field ?: it.name })
+                allRows.addAll(
+                    table.map { row ->
+                        schema.elements.mapIndexed { index, _ -> row.getString(index) }
+                    })
+                csvWriter {
+                    lineTerminator = "\n"
+                    outputLastLineTerminator = true
+                }.writeAll(allRows, outputStream)
+            }
         }
     }
 
@@ -132,7 +152,6 @@ class MappableTable {
         }
         return MappableTable(name, schema, Table.create(columns))
     }
-
 
 
     fun applyMapping(name: String, mapping: Schema.Mapping): MappableTable {

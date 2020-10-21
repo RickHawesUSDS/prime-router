@@ -105,11 +105,46 @@ class MappableTableTests {
     }
 
     @Test
+    fun `test create with csv_field`() {
+        val one = Schema(
+            name = "one",
+            topic = "test",
+            elements = listOf(Schema.Element("a", csv_field = "A"), Schema.Element("b"))
+        )
+        val csv = """
+            A,b
+            1,2
+        """.trimIndent()
+
+        val table1 = MappableTable("test", one, ByteArrayInputStream(csv.toByteArray()), MappableTable.StreamType.CSV)
+        assertEquals(1, table1.rowCount)
+        assertEquals("1", table1.getString(0, "a"))
+    }
+
+    @Test
     fun `test write as csv`() {
         val one = Schema(name = "one", topic = "test", elements = listOf(Schema.Element("a"), Schema.Element("b")))
         val table1 = MappableTable("test", one, listOf(listOf("1", "2")))
         val expectedCsv = """
             a,b
+            1,2
+            
+        """.trimIndent()
+        val output = ByteArrayOutputStream()
+        table1.write(output, MappableTable.StreamType.CSV)
+        assertEquals(expectedCsv, output.toString(StandardCharsets.UTF_8))
+    }
+
+    @Test
+    fun `test write as csv with csv_field`() {
+        val one = Schema(
+            name = "one",
+            topic = "test",
+            elements = listOf(Schema.Element("a", csv_field = "A"), Schema.Element("b"))
+        )
+        val table1 = MappableTable("test", one, listOf(listOf("1", "2")))
+        val expectedCsv = """
+            A,b
             1,2
             
         """.trimIndent()

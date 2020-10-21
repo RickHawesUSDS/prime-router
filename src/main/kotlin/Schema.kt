@@ -15,28 +15,38 @@ data class Schema(
     val topic: String,
     val elements: List<Element> = emptyList(),
 ) {
-    // The element is the fundamental data element of the schema
+    // The Element is the fundamental data element of the schema.
+    // It overlays many different concerns
     data class Element(
         val name: String,
         val type: Type = Type.TEXT,
-        val dateFormat: String = "",
+        val format: String = "",
         val codeSystem: CodeSystem = CodeSystem.NONE,
         val code: String = "",
         val optional: Boolean = true,
-        val default: String? = "",
         val pii: Boolean = false,
-        val validation: String? = null,
+        val phi: Boolean = false,
+        val default: String? = "",
         val hl7_field: String? = null,
         val hl7_operation: String? = null,
         val hl7_validation: String? = null,
         val hl7_template: String? = null,
+        val csv_field: String? = null,
     ) {
         enum class Type {
             TEXT,
-            NUMERIC,
+            NUMBER,
             DATE,
+            DURATION,
             CODED,
-            // Add types defined by HL7 with specific validation rules including DLN, SSN, ADDRESS,
+            ID,
+            ID_DLN,
+            ID_SSN,
+            ADDRESS,
+            POSTAL_CODE,
+            PERSON_NAME,
+            TELEPHONE,
+            EMAIL,
         }
 
         enum class CodeSystem {
@@ -46,6 +56,7 @@ data class Schema(
         }
     }
 
+    // A mapping maps from one schema to another
     data class Mapping(
         val toSchema: Schema,
         val fromSchema: Schema,
@@ -56,6 +67,10 @@ data class Schema(
 
     fun findElement(name: String): Element? {
         return elements.find { it.name == name }
+    }
+
+    fun findUsingCsvField(name: String): Element? {
+        return elements.find { it.csv_field == name || it.name == name }
     }
 
     fun buildMapping(toSchema: Schema): Mapping {
