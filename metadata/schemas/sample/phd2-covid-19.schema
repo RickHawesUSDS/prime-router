@@ -1,5 +1,5 @@
 ---
-name: bb-covid-19
+name: phd2-covid-19
 topic: covid-19
 elements:
   - name: lab
@@ -9,12 +9,10 @@ elements:
     pii: true
   - name: state
     type: TEXT
-    validation: ^[A-Z][A-Z]$
   - name: ssn
   - name: testTime
     type: DATE
   - name: specimenId
-    type: NUMERIC
+    type: ID
   - name: observation
     type: TEXT
-    validation: covid-19:pos|covid-19:neg

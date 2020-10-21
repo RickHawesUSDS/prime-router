@@ -24,3 +24,14 @@ Features of the prototype include:
 
 The full feature set is kept in the repositories project folder. 
 
+## Running a demo
+
+First, setup Java11, Maven, ...
+1. `brew install java11`
+2. `brew install maven`
+
+Next, build
+1. `mvn clean package`
+
+Finally, run the router
+`prime --input_schema=sample/phd1-covid-19 --input=result_files/lab1-test_results-17-42-31.csv --route --output_dir=routed_files`

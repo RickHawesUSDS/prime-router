@@ -7,12 +7,10 @@ elements:
   - name: last_name
   - name: state
     type: TEXT
-    validation: ^[A-Z][A-Z]$
   - name: test_time
     type: DATE
   - name: observation
     type: TEXT
-    validation: covid-19:pos|covid-19:neg
 
 
 

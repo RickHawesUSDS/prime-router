@@ -1,6 +1,8 @@
 ---
+# This is set of standard data elements for covid-19 topic
+#
 name: patient
-topic:
+topic: covid-19
 elements:
   - name: Abnormal_Flag
     type: TEXT
